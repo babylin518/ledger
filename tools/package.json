@@ -1,0 +1,11 @@
+{
+  "name": "ledger-icon-tools",
+  "private": true,
+  "description": "重新导出 icons/logo-any.svg 和 icons/logo-maskable.svg 成各尺寸 PNG",
+  "scripts": {
+    "build": "node render-icons.js"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2"
+  }
+}

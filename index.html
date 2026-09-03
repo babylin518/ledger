@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<title>Ledger — 美股交易记录</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b0d12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ledger">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="120x120" href="icons/apple-touch-icon-120.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/apple-touch-icon-152.png">
+<link rel="apple-touch-icon" sizes="167x167" href="icons/apple-touch-icon-167.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<style>
+:root{
+  --bg:#0b0d12; --bg-elev:#141821; --bg-elev2:#1b2029;
+  --line:#242a36; --line-soft:#1c212b;
+  --fg:#e8edf5; --fg-dim:#8d97a8; --fg-faint:#5e6878;
+  --up:#34d399; --down:#f87171; --accent:#60a5fa;
+  --up-soft:rgba(52,211,153,.14); --down-soft:rgba(248,113,113,.14);
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --nav-h:52px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:var(--bg); color:var(--fg);
+  font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif;
+  overscroll-behavior-y:none; -webkit-font-smoothing:antialiased;
+}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:none;border:0;padding:0;cursor:pointer}
+.up{color:var(--up)} .down{color:var(--down)} .dim{color:var(--fg-dim)} .faint{color:var(--fg-faint)}
+
+/* ---------- chrome ---------- */
+header{
+  position:sticky;top:0;z-index:20;
+  padding:calc(var(--safe-t) + 10px) 16px 10px;
+  background:rgba(11,13,18,.82);backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid var(--line-soft);
+  display:flex;align-items:center;gap:10px;
+}
+header h1{font-size:19px;font-weight:650;margin:0;flex:1;letter-spacing:-.01em}
+.icon-btn{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:var(--fg-dim)}
+.icon-btn:active{background:var(--bg-elev2)}
+.icon-btn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+main{padding:14px 16px calc(var(--nav-h) + var(--safe-b) + 20px)}
+.view{display:none} .view.on{display:block}
+
+nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:20;
+  display:grid;grid-template-columns:repeat(4,1fr);
+  padding-bottom:var(--safe-b);
+  background:rgba(11,13,18,.9);backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-top:1px solid var(--line-soft);
+}
+nav button{height:var(--nav-h);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--fg-faint);font-size:10px;font-weight:500}
+nav button svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--accent)}
+
+/* ---------- cards ---------- */
+.hero{
+  background:linear-gradient(160deg,#171c26,#12151d);
+  border:1px solid var(--line);border-radius:16px;padding:18px 18px 16px;margin-bottom:12px;
+}
+.hero .label{font-size:12px;color:var(--fg-dim);letter-spacing:.02em}
+.hero .big{font-size:34px;font-weight:680;letter-spacing:-.02em;margin:4px 0 2px;line-height:1.1}
+.hero .sub{font-size:13px;font-weight:500}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat{background:var(--bg-elev);border:1px solid var(--line-soft);border-radius:13px;padding:12px 13px}
+.stat .k{font-size:11.5px;color:var(--fg-dim);margin-bottom:3px}
+.stat .v{font-size:18px;font-weight:620;letter-spacing:-.01em}
+.stat .x{font-size:11px;color:var(--fg-faint);margin-top:2px}
+
+.sec{margin:20px 0 9px;display:flex;align-items:baseline;gap:8px}
+.sec h2{font-size:13px;font-weight:600;color:var(--fg-dim);margin:0;letter-spacing:.02em}
+.sec .more{margin-left:auto;font-size:12px;color:var(--accent)}
+
+.card{background:var(--bg-elev);border:1px solid var(--line-soft);border-radius:13px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line-soft);width:100%;text-align:left}
+.row:last-child{border-bottom:0}
+.row:active{background:var(--bg-elev2)}
+.row .main{flex:1;min-width:0}
+.row .t1{font-size:15px;font-weight:580;letter-spacing:-.005em}
+.row .t2{font-size:12px;color:var(--fg-dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .side{text-align:right;flex-shrink:0}
+.row .r1{font-size:15px;font-weight:600}
+.row .r2{font-size:12px;margin-top:2px}
+
+/* 热门行情：可拖拽排序的一行 = 主体（点开设置现价）+ 拖动手柄（只有按住这个才会拖） */
+.hot-item{display:flex;align-items:stretch;border-bottom:1px solid var(--line-soft)}
+.hot-item:last-child{border-bottom:0}
+.hot-item .hot-tap{flex:1;width:auto;min-width:0;border-bottom:0}
+.hot-item .drag-handle{width:38px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--fg-faint);touch-action:none;-webkit-user-select:none;user-select:none}
+.hot-item .drag-handle svg{width:18px;height:18px;fill:currentColor}
+.hot-item.dragging{background:var(--bg-elev2);box-shadow:0 6px 18px rgba(0,0,0,.45);border-radius:10px;position:relative;z-index:5}
+.hot-item.dragging .drag-handle{color:var(--accent)}
+
+.tag{display:inline-block;font-size:10.5px;font-weight:650;padding:1.5px 5px;border-radius:5px;letter-spacing:.03em;vertical-align:1px}
+.tag.b{background:var(--up-soft);color:var(--up)}
+.tag.s{background:var(--down-soft);color:var(--down)}
+
+.empty{text-align:center;padding:44px 20px;color:var(--fg-faint);font-size:13.5px;line-height:1.7}
+.empty svg{width:38px;height:38px;stroke:currentColor;fill:none;stroke-width:1.4;opacity:.5;margin-bottom:10px}
+
+/* ---------- chart ---------- */
+.chart{background:var(--bg-elev);border:1px solid var(--line-soft);border-radius:13px;padding:14px 12px 8px}
+.chart svg{display:block;width:100%;height:150px;overflow:visible}
+.chart .lbl{font-size:9.5px;fill:var(--fg-faint)}
+
+/* ---------- fab ---------- */
+.fab{
+  position:fixed;right:16px;bottom:calc(var(--nav-h) + var(--safe-b) + 16px);z-index:25;
+  width:54px;height:54px;border-radius:27px;background:var(--accent);color:#08111f;
+  display:grid;place-items:center;box-shadow:0 8px 24px rgba(96,165,250,.34);
+}
+.fab svg{width:25px;height:25px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round}
+.fab:active{transform:scale(.93)}
+
+/* ---------- sheet ---------- */
+.mask{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .22s}
+.mask.on{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:41;
+  background:var(--bg-elev);border-radius:20px 20px 0 0;border-top:1px solid var(--line);
+  transform:translateY(101%);transition:transform .3s cubic-bezier(.32,.72,0,1);
+  max-height:92vh;display:flex;flex-direction:column;
+}
+.sheet.on{transform:translateY(0)}
+.sheet-hd{display:flex;align-items:center;padding:14px 16px 10px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
+.sheet-hd h3{flex:1;text-align:center;font-size:16px;font-weight:620;margin:0}
+.sheet-hd button{font-size:15px;color:var(--accent);min-width:52px}
+.sheet-hd button:first-child{text-align:left;color:var(--fg-dim)}
+.sheet-hd button:last-child{text-align:right;font-weight:600}
+.sheet-bd{padding:14px 16px calc(20px + var(--safe-b));overflow-y:auto;-webkit-overflow-scrolling:touch}
+
+.field{margin-bottom:13px}
+.field label{display:block;font-size:12px;color:var(--fg-dim);margin-bottom:5px;font-weight:500}
+.field input,.field textarea,.field select{
+  width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;
+  padding:11px 12px;font-size:16px;outline:none;
+}
+.field input:focus,.field textarea:focus{border-color:var(--accent)}
+.field textarea{resize:none;min-height:60px;font-size:15px}
+.field .hint{font-size:11px;color:var(--fg-faint);margin-top:5px}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{padding:9px;border-radius:8px;font-size:14.5px;font-weight:600;color:var(--fg-dim)}
+.seg button.on[data-side="buy"]{background:var(--up-soft);color:var(--up)}
+.seg button.on[data-side="sell"]{background:var(--down-soft);color:var(--down)}
+/* 可搜索下拉 */
+.combo{position:relative}
+.combo-pop{
+  position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:6;
+  background:var(--bg-elev2);border:1px solid var(--line);border-radius:12px;
+  max-height:238px;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  box-shadow:0 14px 34px rgba(0,0,0,.55);display:none;
+}
+.combo-pop.on{display:block}
+.combo-pop .hd{padding:8px 12px 6px;font-size:11px;color:var(--fg-faint);font-weight:600;letter-spacing:.03em;position:sticky;top:0;background:var(--bg-elev2)}
+.opt{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line-soft);width:100%;text-align:left}
+.opt:last-child{border-bottom:0}
+.opt:active{background:var(--bg-elev)}
+.opt .sym{font-weight:660;font-size:14px;min-width:64px;flex-shrink:0;font-variant-numeric:tabular-nums}
+.opt .cn{font-size:13.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.opt .en{font-size:10.5px;color:var(--fg-faint);max-width:98px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
+.opt mark{background:rgba(96,165,250,.22);color:var(--accent);border-radius:3px;padding:0 1px}
+.opt .held{font-size:9.5px;color:var(--up);border:1px solid rgba(52,211,153,.35);border-radius:4px;padding:0 4px;flex-shrink:0}
+.combo-pop .none{padding:12px;font-size:12.5px;color:var(--fg-faint);text-align:center;line-height:1.6}
+.btn{width:100%;padding:13px;border-radius:11px;font-size:15.5px;font-weight:600;background:var(--bg-elev2);border:1px solid var(--line);margin-bottom:9px;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn:active{opacity:.65}
+.btn.danger{color:var(--down)}
+.btn.primary{background:var(--accent);color:#08111f;border-color:transparent}
+
+.toast{
+  position:fixed;left:50%;bottom:calc(var(--nav-h) + var(--safe-b) + 22px);transform:translate(-50%,14px);
+  z-index:60;background:#eef2f8;color:#0b0d12;padding:10px 17px;border-radius:11px;
+  font-size:13.5px;font-weight:560;opacity:0;pointer-events:none;transition:all .24s;max-width:82vw;text-align:center;
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="title">概览</h1>
+  <button class="icon-btn" id="btn-settings" aria-label="设置">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.36.42.65.78.82H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  </button>
+</header>
+
+<main>
+  <!-- ============ 概览 ============ -->
+  <section class="view on" id="v-overview">
+    <div class="hero">
+      <div class="label">总盈亏（已实现 + 浮动）</div>
+      <div class="big num" id="o-total">$0.00</div>
+      <div class="sub num" id="o-total-pct">—</div>
+    </div>
+    <div class="grid2">
+      <div class="stat"><div class="k">持仓市值</div><div class="v num" id="o-mv">$0.00</div><div class="x num" id="o-cost">成本 $0.00</div></div>
+      <div class="stat"><div class="k">浮动盈亏</div><div class="v num" id="o-unreal">$0.00</div><div class="x num" id="o-unreal-pct">—</div></div>
+      <div class="stat"><div class="k">已实现盈亏</div><div class="v num" id="o-real">$0.00</div><div class="x num" id="o-real-x">0 笔平仓</div></div>
+      <div class="stat"><div class="k">累计手续费</div><div class="v num" id="o-fee">$0.00</div><div class="x num" id="o-trades">0 笔交易</div></div>
+    </div>
+    <div class="sec"><h2>月度已实现盈亏</h2></div>
+    <div class="chart" id="o-chart"></div>
+    <div class="sec"><h2>当前持仓</h2><button class="more" data-go="holdings">全部 ›</button></div>
+    <div class="card" id="o-holdings"></div>
+  </section>
+
+  <!-- ============ 持仓 ============ -->
+  <section class="view" id="v-holdings">
+    <div class="grid2">
+      <div class="stat"><div class="k">持仓市值</div><div class="v num" id="h-mv">$0.00</div></div>
+      <div class="stat"><div class="k">浮动盈亏</div><div class="v num" id="h-pl">$0.00</div></div>
+    </div>
+    <div class="card" id="h-list"></div>
+    <p class="empty faint" style="padding:16px 4px;text-align:left;font-size:11.5px;line-height:1.7">
+      离线模式下不联网获取行情。点击任一持仓可手动更新现价，浮动盈亏会立即重算。
+    </p>
+
+    <div class="sec">
+      <h2>热门行情</h2>
+      <button class="more" id="h-refresh" style="margin-left:auto;display:flex;align-items:center;gap:4px">
+        <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M21 12a9 9 0 1 1-3-6.7M21 3v5h-5"/></svg>
+        <span id="h-refresh-label">刷新行情</span>
+      </button>
+    </div>
+    <div class="card" id="h-hot"></div>
+    <p class="empty faint" style="padding:10px 4px 4px;text-align:left;font-size:11.5px;line-height:1.7">
+      默认离线，手动记一次价就跟上一次比出涨跌幅。在「设置」里填一个免费的行情 Key 后，点上面的「刷新行情」可以联网拉真实的当日涨跌 —— 完全可选，不填 Key 就一直是纯离线模式。按住每行右边的 <b>⠿</b> 拖动可以调整顺序，顺序会记住。
+    </p>
+  </section>
+
+  <!-- ============ 流水 ============ -->
+  <section class="view" id="v-trades">
+    <div id="t-list"></div>
+  </section>
+
+  <!-- ============ 统计 ============ -->
+  <section class="view" id="v-stats">
+    <div class="grid2">
+      <div class="stat"><div class="k">胜率</div><div class="v num" id="s-win">—</div><div class="x num" id="s-win-x">—</div></div>
+      <div class="stat"><div class="k">盈亏比</div><div class="v num" id="s-pf">—</div><div class="x">平均盈利 / 平均亏损</div></div>
+      <div class="stat"><div class="k">平均持仓</div><div class="v num" id="s-days">—</div><div class="x">已平仓交易</div></div>
+      <div class="stat"><div class="k">单笔最佳</div><div class="v num up" id="s-best">—</div><div class="x num" id="s-worst">最差 —</div></div>
+    </div>
+    <div class="sec"><h2>已平仓交易</h2></div>
+    <div class="card" id="s-closed"></div>
+  </section>
+</main>
+
+<button class="fab" id="fab" aria-label="记一笔"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+
+<nav>
+  <button class="on" data-go="overview"><svg viewBox="0 0 24 24"><path d="M3 13h4l3 7 4-16 3 9h4"/></svg>概览</button>
+  <button data-go="holdings"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 10h18M9 10v10"/></svg>持仓</button>
+  <button data-go="trades"><svg viewBox="0 0 24 24"><path d="M4 7h11M4 7l3-3M4 7l3 3M20 17H9M20 17l-3-3M20 17l-3 3"/></svg>流水</button>
+  <button data-go="stats"><svg viewBox="0 0 24 24"><path d="M6 20V10M12 20V4M18 20v-7"/></svg>统计</button>
+</nav>
+
+<div class="mask" id="mask"></div>
+
+<!-- 记一笔 -->
+<div class="sheet" id="sheet-trade">
+  <div class="sheet-hd">
+    <button id="tr-cancel">取消</button>
+    <h3 id="tr-title">记一笔</h3>
+    <button id="tr-save">保存</button>
+  </div>
+  <div class="sheet-bd">
+    <div class="field">
+      <div class="seg" id="tr-side">
+        <button data-side="buy" class="on">买入</button>
+        <button data-side="sell">卖出</button>
+      </div>
+    </div>
+    <div class="field combo">
+      <label>股票 <span class="faint" style="font-weight:400">— 代码 / 中文名 / 英文名 都能搜</span></label>
+      <input id="tr-symbol" placeholder="AAPL　苹果　Apple" autocapitalize="characters" autocorrect="off" spellcheck="false" autocomplete="off">
+      <div class="combo-pop" id="tr-pop"></div>
+    </div>
+    <div class="field"><label>名称</label><input id="tr-name" placeholder="选中代码后自动填充，可改" autocorrect="off"></div>
+    <div class="f2">
+      <div class="field"><label>股数</label><input id="tr-shares" type="text" inputmode="decimal" placeholder="100"></div>
+      <div class="field"><label>成交价 USD</label><input id="tr-price" type="text" inputmode="decimal" placeholder="185.20"></div>
+    </div>
+    <div class="f2">
+      <div class="field"><label>成交日期</label><input id="tr-date" type="date"></div>
+      <div class="field"><label>手续费 USD</label><input id="tr-fee" type="text" inputmode="decimal" placeholder="0"></div>
+    </div>
+    <div class="field"><label>备注（可选）</label><textarea id="tr-note" placeholder="买入理由、计划止盈止损…"></textarea></div>
+    <div class="field"><div class="hint num" id="tr-amount">成交金额 —</div></div>
+    <button class="btn danger" id="tr-delete" style="display:none">删除这笔记录</button>
+  </div>
+</div>
+
+<!-- 更新现价 -->
+<div class="sheet" id="sheet-price">
+  <div class="sheet-hd">
+    <button id="pr-cancel">取消</button>
+    <h3 id="pr-title">更新现价</h3>
+    <button id="pr-save">保存</button>
+  </div>
+  <div class="sheet-bd">
+    <div class="field"><label>最新价 USD</label><input id="pr-price" type="text" inputmode="decimal" placeholder="0.00"></div>
+    <div class="field"><div class="hint" id="pr-hint"></div></div>
+    <div class="sec"><h2>该股票流水</h2></div>
+    <div class="card" id="pr-trades"></div>
+  </div>
+</div>
+
+<!-- 设置 -->
+<div class="sheet" id="sheet-settings">
+  <div class="sheet-hd">
+    <button id="st-cancel">关闭</button>
+    <h3>设置</h3>
+    <button style="visibility:hidden">占位</button>
+  </div>
+  <div class="sheet-bd">
+    <div class="sec"><h2>行情自动刷新</h2></div>
+    <p class="faint" style="font-size:11.5px;line-height:1.75;margin:0 2px 10px">
+      默认完全离线，不填这个不影响任何功能。填了免费 Key 之后，「持仓」页的「刷新行情」才会联网——只发股票代码出去，不带你的任何交易或持仓数据。
+      来自 <a href="https://finnhub.io/register" target="_blank" rel="noopener" style="color:var(--accent)">Finnhub</a>，免费层<b>没有每日总量限制</b>（只按分钟限速 60 次/分钟），注册即拿 Key 不用信用卡。
+    </p>
+    <div class="field"><label>API Key</label><input id="cfg-key" placeholder="粘贴你的 Finnhub API Key" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+    <label style="display:flex;align-items:center;gap:8px;margin:2px 2px 12px;font-size:13.5px;color:var(--fg-dim)">
+      <input type="checkbox" id="cfg-auto" style="width:16px;height:16px;accent-color:var(--accent)">
+      打开 App 时自动刷新一次（15 分钟内重复打开不会重复刷）
+    </label>
+    <div class="f2">
+      <button class="btn" id="cfg-save" style="margin-bottom:0">保存</button>
+      <button class="btn" id="cfg-clear" style="margin-bottom:0">清空 Key</button>
+    </div>
+    <div class="field"><div class="hint" id="cfg-status" style="margin-top:9px">未配置 · 当前完全离线</div></div>
+
+    <div class="sec"><h2>数据备份</h2></div>
+    <button class="btn" id="st-export">导出为 JSON 文件</button>
+    <button class="btn" id="st-import">从 JSON 文件导入</button>
+    <input type="file" id="st-file" accept="application/json,.json" style="display:none">
+    <p class="faint" style="font-size:11.5px;line-height:1.75;margin:4px 2px 0">
+      数据保存在本机浏览器的 IndexedDB 中，不上传任何服务器。<b>删掉主屏图标会一并清除数据</b>，请定期导出备份到「文件」或 iCloud Drive。
+    </p>
+    <div class="sec"><h2>示例</h2></div>
+    <button class="btn" id="st-demo">载入示例数据</button>
+    <div class="sec"><h2>危险操作</h2></div>
+    <button class="btn danger" id="st-clear">清空全部数据</button>
+    <div class="sec"><h2>关于</h2></div>
+    <p class="faint num" style="font-size:11.5px;line-height:1.8;margin:4px 2px 0 0" id="st-about"></p>
+    <button class="btn" id="st-refresh-app" style="margin-top:12px">检查更新 · 清除缓存并重新加载</button>
+    <p class="faint" style="font-size:11.5px;line-height:1.7;margin:6px 2px 0">
+      App 离线运行靠本地缓存的代码文件。如果更新了新版本但页面看起来还是旧的（比如设置里的说明文字对不上），点这个按钮强制拉最新代码——<b>不会</b>清掉你的交易记录，那些存在另一个地方。
+    </p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="stocks.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
