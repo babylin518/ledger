@@ -1,5 +1,5 @@
 /* Ledger service worker — 预缓存全部资源，装机后完全离线运行 */
-const CACHE = 'ledger-v1.6.7';
+const CACHE = 'ledger-v1.6.8';
 const ASSETS = [
   './',
   './index.html',
