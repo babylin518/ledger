@@ -2,7 +2,7 @@
    数据源单一：trades 流水。持仓 / 已实现盈亏 / 统计全部由流水按 FIFO 实时推导。 */
 'use strict';
 
-const VERSION = '1.6.5';
+const VERSION = '1.6.6';
 const EPS = 1e-9;
 
 /* ============================== IndexedDB ============================== */
@@ -819,33 +819,6 @@ document.addEventListener('click', (e) => {
 });
 
 /* ============================== 设置 / 备份 ============================== */
-/* 布局诊断：把这台设备在当前运行模式下量到的各种高度摆出来，用于排查
-   「独立 PWA 模式下底部露出一条空白」这类只在真机上才复现的问题。 */
-function fillDiag() {
-  const el = $('#st-diag');
-  if (!el) return;
-  const probe = document.createElement('div');
-  probe.style.cssText = 'position:fixed;bottom:0;left:0;width:1px;height:env(safe-area-inset-bottom,0px);pointer-events:none;opacity:0';
-  document.body.appendChild(probe);
-  const safeB = probe.getBoundingClientRect().height;
-  probe.remove();
-  const nav = document.querySelector('nav');
-  const navRect = nav ? nav.getBoundingClientRect() : { bottom: 0 };
-  const vv = window.visualViewport;
-  const standalone =
-    window.navigator.standalone === true ||
-    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
-  el.innerHTML = [
-    'standalone(主屏模式) = ' + (standalone ? '是' : '否'),
-    'window.innerHeight = ' + window.innerHeight,
-    'documentElement.clientHeight = ' + document.documentElement.clientHeight,
-    'visualViewport.height = ' + (vv ? Math.round(vv.height * 100) / 100 : 'n/a'),
-    'screen.height = ' + window.screen.height,
-    'safe-area-inset-bottom = ' + safeB,
-    'nav 底边坐标 = ' + Math.round(navRect.bottom * 100) / 100,
-  ].join('<br>');
-}
-
 function openSettings() {
   $('#st-about').innerHTML =
     `Ledger v${VERSION} · 本地数据完全离线<br>${S.trades.length} 笔流水 · ${Object.keys(S.prices).length} 个现价<br>` +
@@ -861,7 +834,6 @@ function openSettings() {
   $('#cfg-status').textContent = S.config.apiKey
     ? (S.config.lastRefreshAt ? '已配置 · 上次刷新 ' + new Date(S.config.lastRefreshAt).toLocaleString('zh-CN') : '已配置 · 还没刷新过')
     : '未配置 · 当前完全离线';
-  fillDiag();
   syncThemeSeg();
   sheet('#sheet-settings');
 }
