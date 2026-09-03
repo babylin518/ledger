@@ -96,7 +96,7 @@ header{
   display:flex;align-items:center;gap:10px;
 }
 header h1{font-size:19px;font-weight:650;margin:0;flex:1;letter-spacing:-.01em}
-.icon-btn{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:var(--fg-dim)}
+.icon-btn{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;color:var(--fg-dim);margin-right:-6px}
 .icon-btn:active{background:var(--bg-elev2)}
 .icon-btn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 
@@ -187,11 +187,18 @@ nav button.on{color:var(--accent)}
   max-height:92vh;display:flex;flex-direction:column;
 }
 .sheet.on{transform:translateY(0)}
-.sheet-hd{display:flex;align-items:center;padding:14px 16px 10px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
+.sheet-hd{display:flex;align-items:center;padding:5px 8px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
 .sheet-hd h3{flex:1;text-align:center;font-size:16px;font-weight:620;margin:0}
-.sheet-hd button{font-size:15px;color:var(--accent);min-width:52px}
-.sheet-hd button:first-child{text-align:left;color:var(--fg-dim)}
-.sheet-hd button:last-child{text-align:right;font-weight:600}
+/* 取消 / 保存 这类文字按钮，光靠文字行高只有 22px 高，手指很难点中
+   （苹果 HIG 要求可点区域至少 44×44pt）。用 min-height + 左右 padding
+   把命中区域撑到 44pt，文字位置靠 flex 对齐保持不变。 */
+.sheet-hd button{
+  font-size:15px;color:var(--accent);
+  min-width:64px;min-height:44px;padding:0 8px;
+  display:flex;align-items:center;
+}
+.sheet-hd button:first-child{justify-content:flex-start;color:var(--fg-dim)}
+.sheet-hd button:last-child{justify-content:flex-end;font-weight:600}
 .sheet-bd{padding:14px 16px calc(20px + var(--safe-b));overflow-y:auto;-webkit-overflow-scrolling:touch}
 
 .field{margin-bottom:13px}
