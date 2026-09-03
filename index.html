@@ -37,10 +37,12 @@
   --up-soft:rgba(52,211,153,.14); --down-soft:rgba(248,113,113,.14);
   --hero-grad:linear-gradient(160deg,#171c26,#12151d);
   --accent-glow:rgba(96,165,250,.34);
-  --header-bg:rgba(11,13,18,.82); --nav-bg:rgba(11,13,18,.9);
+  --header-bg:rgba(11,13,18,.82); --nav-bg:rgba(20,24,33,.92);
   --safe-t:env(safe-area-inset-top,0px);
   --safe-b:env(safe-area-inset-bottom,0px);
   --nav-h:52px;
+  /* 底栏实际预留的安全区高度：34pt 全留在浅色下显得空，压到六成 */
+  --nav-pb:calc(var(--safe-b) * .6);
 }
 /* 浅色：系统是浅色 且 用户没有强制选深色 时自动生效 */
 @media (prefers-color-scheme: light) {
@@ -52,7 +54,7 @@
     --up-soft:rgba(14,159,86,.10); --down-soft:rgba(220,38,38,.10);
     --hero-grad:linear-gradient(160deg,#f8f9fb,#eef0f4);
     --accent-glow:rgba(37,99,235,.28);
-    --header-bg:rgba(255,255,255,.82); --nav-bg:rgba(255,255,255,.9);
+    --header-bg:rgba(255,255,255,.82); --nav-bg:rgba(246,247,250,.94);
   }
 }
 /* 用户在设置里明确选了「浅色」：不管系统是什么，强制浅色 */
@@ -64,7 +66,7 @@
   --up-soft:rgba(14,159,86,.10); --down-soft:rgba(220,38,38,.10);
   --hero-grad:linear-gradient(160deg,#f8f9fb,#eef0f4);
   --accent-glow:rgba(37,99,235,.28);
-  --header-bg:rgba(255,255,255,.82); --nav-bg:rgba(255,255,255,.9);
+  --header-bg:rgba(255,255,255,.82); --nav-bg:rgba(246,247,250,.94);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;height:100%;background:var(--bg)}
@@ -107,10 +109,10 @@ main{
 nav{
   flex:0 0 auto;
   display:grid;grid-template-columns:repeat(4,1fr);
-  padding-bottom:var(--safe-b);
+  padding-bottom:var(--nav-pb);
   background:var(--nav-bg);backdrop-filter:saturate(180%) blur(20px);
   -webkit-backdrop-filter:saturate(180%) blur(20px);
-  border-top:1px solid var(--line-soft);
+  border-top:1px solid var(--line);
 }
 nav button{height:var(--nav-h);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--fg-faint);font-size:10px;font-weight:500}
 nav button svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -168,7 +170,7 @@ nav button.on{color:var(--accent)}
 
 /* ---------- fab ---------- */
 .fab{
-  position:fixed;right:16px;bottom:calc(var(--nav-h) + var(--safe-b) + 16px);z-index:25;
+  position:fixed;right:16px;bottom:calc(var(--nav-h) + var(--nav-pb) + 16px);z-index:25;
   width:54px;height:54px;border-radius:27px;background:var(--accent);color:#08111f;
   display:grid;place-items:center;box-shadow:0 8px 24px var(--accent-glow);
 }
@@ -233,7 +235,7 @@ nav button.on{color:var(--accent)}
 .btn.primary{background:var(--accent);color:#08111f;border-color:transparent}
 
 .toast{
-  position:fixed;left:50%;bottom:calc(var(--nav-h) + var(--safe-b) + 22px);transform:translate(-50%,14px);
+  position:fixed;left:50%;bottom:calc(var(--nav-h) + var(--nav-pb) + 22px);transform:translate(-50%,14px);
   z-index:60;background:#eef2f8;color:#0b0d12;padding:10px 17px;border-radius:11px;
   font-size:13.5px;font-weight:560;opacity:0;pointer-events:none;transition:all .24s;max-width:82vw;text-align:center;
 }
