@@ -2,7 +2,7 @@
    数据源单一：trades 流水。持仓 / 已实现盈亏 / 统计全部由流水按 FIFO 实时推导。 */
 'use strict';
 
-const VERSION = '1.6.0';
+const VERSION = '1.6.1';
 const EPS = 1e-9;
 
 /* ============================== IndexedDB ============================== */
@@ -443,7 +443,8 @@ function go(v) {
   $$('.view').forEach((e) => e.classList.toggle('on', e.id === 'v-' + v));
   $$('nav button').forEach((b) => b.classList.toggle('on', b.dataset.go === v));
   $('#title').textContent = TITLES[v];
-  window.scrollTo(0, 0);
+  const main = document.querySelector('main');
+  if (main) main.scrollTop = 0; // main 才是真正的滚动容器，不是 window
 }
 document.addEventListener('click', (e) => {
   const g = e.target.closest('[data-go]');

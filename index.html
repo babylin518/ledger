@@ -69,6 +69,8 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;height:100%;background:var(--bg)}
 body{
+  display:flex;flex-direction:column;
+  height:100vh;height:100dvh;
   background:var(--bg); color:var(--fg);
   font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif;
   overscroll-behavior-y:none; -webkit-font-smoothing:antialiased;
@@ -80,7 +82,7 @@ button{background:none;border:0;padding:0;cursor:pointer}
 
 /* ---------- chrome ---------- */
 header{
-  position:sticky;top:0;z-index:20;
+  flex:0 0 auto;
   padding:calc(var(--safe-t) + 10px) 16px 10px;
   background:var(--header-bg);backdrop-filter:saturate(180%) blur(20px);
   -webkit-backdrop-filter:saturate(180%) blur(20px);
@@ -92,11 +94,14 @@ header h1{font-size:19px;font-weight:650;margin:0;flex:1;letter-spacing:-.01em}
 .icon-btn:active{background:var(--bg-elev2)}
 .icon-btn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 
-main{padding:14px 16px calc(var(--nav-h) + var(--safe-b) + 20px)}
+main{
+  flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:14px 16px 20px;
+}
 .view{display:none} .view.on{display:block}
 
 nav{
-  position:fixed;left:0;right:0;bottom:0;z-index:20;
+  flex:0 0 auto;
   display:grid;grid-template-columns:repeat(4,1fr);
   padding-bottom:var(--safe-b);
   background:var(--nav-bg);backdrop-filter:saturate(180%) blur(20px);
