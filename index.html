@@ -89,6 +89,7 @@ button{background:none;border:0;padding:0;cursor:pointer}
 /* ---------- chrome ---------- */
 header{
   flex:0 0 auto;
+  position:relative;z-index:1;
   padding:calc(var(--safe-t) + 10px) 16px 10px;
   background:var(--header-bg);backdrop-filter:saturate(180%) blur(20px);
   -webkit-backdrop-filter:saturate(180%) blur(20px);
@@ -102,12 +103,14 @@ header h1{font-size:19px;font-weight:650;margin:0;flex:1;letter-spacing:-.01em}
 
 main{
   flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  position:relative;z-index:0;
   padding:14px 16px 20px;
 }
 .view{display:none} .view.on{display:block}
 
 nav{
   flex:0 0 auto;
+  position:relative;z-index:1;
   display:grid;grid-template-columns:repeat(4,1fr);
   padding-bottom:var(--nav-pb);
   background:var(--nav-bg);backdrop-filter:saturate(180%) blur(20px);
@@ -178,16 +181,19 @@ nav button.on{color:var(--accent)}
 .fab:active{transform:scale(.93)}
 
 /* ---------- sheet ---------- */
-.mask{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .22s}
+/* 面板打开时，chrome 的 backdrop-filter 会生成合成层，WebKit 上有概率盖到面板上面去
+   （表现就是「关闭按钮点不到」）。此时整屏已被蒙层盖住，模糊本来也看不见，直接关掉。 */
+body.sheet-open header,body.sheet-open nav{backdrop-filter:none;-webkit-backdrop-filter:none}
+.mask{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .22s}
 .mask.on{opacity:1;pointer-events:auto}
 .sheet{
-  position:fixed;left:0;right:0;bottom:0;z-index:41;
+  position:fixed;left:0;right:0;bottom:0;z-index:51;
   background:var(--bg-elev);border-radius:20px 20px 0 0;border-top:1px solid var(--line);
   transform:translateY(101%);transition:transform .3s cubic-bezier(.32,.72,0,1);
-  max-height:92vh;display:flex;flex-direction:column;
+  max-height:calc(100% - var(--safe-t) - 76px);display:flex;flex-direction:column;
 }
 .sheet.on{transform:translateY(0)}
-.sheet-hd{display:flex;align-items:center;padding:5px 8px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
+.sheet-hd{display:flex;align-items:center;padding:5px 8px;border-bottom:1px solid var(--line-soft);flex-shrink:0;touch-action:none}
 .sheet-hd h3{flex:1;text-align:center;font-size:16px;font-weight:620;margin:0}
 /* 取消 / 保存 这类文字按钮，光靠文字行高只有 22px 高，手指很难点中
    （苹果 HIG 要求可点区域至少 44×44pt）。用 min-height + 左右 padding

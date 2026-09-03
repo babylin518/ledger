@@ -2,7 +2,7 @@
    数据源单一：trades 流水。持仓 / 已实现盈亏 / 统计全部由流水按 FIFO 实时推导。 */
 'use strict';
 
-const VERSION = '1.6.6';
+const VERSION = '1.6.7';
 const EPS = 1e-9;
 
 /* ============================== IndexedDB ============================== */
@@ -454,12 +454,45 @@ document.addEventListener('click', (e) => {
 /* ============================== sheet ============================== */
 let openSheet = null;
 function sheet(id) {
-  if (openSheet) openSheet.classList.remove('on');
+  if (openSheet) { openSheet.classList.remove('on'); openSheet.style.transform = ''; }
   openSheet = id ? $(id) : null;
   $('#mask').classList.toggle('on', !!openSheet);
+  document.body.classList.toggle('sheet-open', !!openSheet);
   if (openSheet) openSheet.classList.add('on');
 }
 $('#mask').addEventListener('click', () => sheet(null));
+
+/* 往下拖面板头部即可关闭。
+   这是「关闭按钮万一被什么东西盖住」时的兜底退路：整条头部（不只是那两个字）
+   都能拖，命中区域是按钮的十几倍，而且是 iOS 用户本来就熟悉的手势。 */
+$$('.sheet-hd').forEach((hd) => {
+  let startY = 0, dy = 0, dragging = false, panel = null;
+  hd.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('button')) return; // 按钮自己的点击优先，别被手势吃掉
+    panel = hd.closest('.sheet');
+    if (!panel) return;
+    dragging = true; startY = e.clientY; dy = 0;
+    panel.style.transition = 'none';
+    hd.setPointerCapture(e.pointerId);
+  });
+  hd.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    dy = Math.max(0, e.clientY - startY); // 只允许往下拖
+    panel.style.transform = 'translateY(' + dy + 'px)';
+  });
+  const end = () => {
+    if (!dragging) return;
+    dragging = false;
+    panel.style.transition = '';
+    // 拖够了就交给 sheet() 收起：它会清掉内联 transform，面板顺着过渡直接滑下去，
+    // 不会先弹回原位再滑（那样会闪一下）。没拖够才手动弹回。
+    if (dy > 80) sheet(null);
+    else panel.style.transform = '';
+    panel = null;
+  };
+  hd.addEventListener('pointerup', end);
+  hd.addEventListener('pointercancel', end);
+});
 
 function toast(msg) {
   const t = $('#toast');
