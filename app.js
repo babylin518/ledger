@@ -2,7 +2,7 @@
    数据源单一：trades 流水。持仓 / 已实现盈亏 / 统计全部由流水按 FIFO 实时推导。 */
 'use strict';
 
-const VERSION = '1.5.2';
+const VERSION = '1.6.0';
 const EPS = 1e-9;
 
 /* ============================== IndexedDB ============================== */
@@ -44,16 +44,39 @@ const DB = (() => {
 })();
 
 /* ============================== state ============================== */
-const S = { trades: [], prices: {}, config: { apiKey: '', autoOnOpen: false, lastRefreshAt: 0, hotOrder: [] }, view: 'overview', editId: null, editSymbol: null, side: 'buy' };
+const S = { trades: [], prices: {}, config: { apiKey: '', autoOnOpen: false, lastRefreshAt: 0, hotOrder: [], theme: 'system' }, view: 'overview', editId: null, editSymbol: null, side: 'buy' };
 
 async function load() {
   const [trades, prices, cfg] = await Promise.all([DB.all('trades'), DB.all('prices'), DB.get('settings', 'config')]);
   S.trades = trades.sort(cmpTrade);
   S.prices = {};
   prices.forEach((p) => { S.prices[p.symbol] = p; });
-  if (cfg) S.config = { apiKey: '', autoOnOpen: false, lastRefreshAt: 0, hotOrder: [], ...cfg };
+  if (cfg) S.config = { apiKey: '', autoOnOpen: false, lastRefreshAt: 0, hotOrder: [], theme: 'system', ...cfg };
 }
 const saveConfig = () => DB.put('settings', { id: 'config', ...S.config });
+
+/* ============================== 主题：跟随系统 / 浅色 / 深色 ============================== */
+const THEME_COLOR = { dark: '#0b0d12', light: '#ffffff' };
+function applyTheme() {
+  const t = S.config.theme; // 'system' | 'light' | 'dark'
+  const root = document.documentElement;
+  if (t === 'light' || t === 'dark') {
+    root.setAttribute('data-theme', t);
+    try { localStorage.setItem('ledger-theme', t); } catch (e) {}
+  } else {
+    root.removeAttribute('data-theme');
+    try { localStorage.removeItem('ledger-theme'); } catch (e) {}
+  }
+  const sysLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+  const effective = t === 'light' ? 'light' : t === 'dark' ? 'dark' : (sysLight ? 'light' : 'dark');
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', THEME_COLOR[effective]);
+}
+if (window.matchMedia) {
+  window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+    if (S.config.theme === 'system') applyTheme();
+  });
+}
 
 const cmpTrade = (a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.id < b.id ? -1 : 1);
 
@@ -810,10 +833,23 @@ function openSettings() {
   $('#cfg-status').textContent = S.config.apiKey
     ? (S.config.lastRefreshAt ? '已配置 · 上次刷新 ' + new Date(S.config.lastRefreshAt).toLocaleString('zh-CN') : '已配置 · 还没刷新过')
     : '未配置 · 当前完全离线';
+  syncThemeSeg();
   sheet('#sheet-settings');
 }
 $('#btn-settings').addEventListener('click', openSettings);
 $('#st-cancel').addEventListener('click', () => sheet(null));
+
+function syncThemeSeg() {
+  $$('#theme-seg button').forEach((b) => b.classList.toggle('on', b.dataset.theme === S.config.theme));
+}
+$('#theme-seg').addEventListener('click', async (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  S.config.theme = b.dataset.theme;
+  applyTheme();
+  syncThemeSeg();
+  await saveConfig();
+});
 
 $('#cfg-save').addEventListener('click', async () => {
   S.config.apiKey = $('#cfg-key').value.trim();
@@ -930,6 +966,7 @@ $('#st-demo').addEventListener('click', async () => {
   } catch (err) {
     alert('无法打开本地数据库：' + err.message + '\n（无痕模式下 IndexedDB 可能不可用）');
   }
+  applyTheme();
   render();
   go('overview');
   if ('serviceWorker' in navigator) {

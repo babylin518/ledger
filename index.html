@@ -16,16 +16,55 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<script>
+/* 防止「先画错主题的深色页面，脚本才把它切成浅色」那一下闪烁：
+   在任何 CSS 生效之前，先用 localStorage 里记的上一次选择同步设好 data-theme。
+   真正的选择存在 IndexedDB 里（跟其他设置一致），这里只是给首屏画面用的缓存。 */
+(function () {
+  try {
+    var t = localStorage.getItem('ledger-theme');
+    if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {}
+})();
+</script>
 <style>
 :root{
+  /* 深色（默认） */
   --bg:#0b0d12; --bg-elev:#141821; --bg-elev2:#1b2029;
   --line:#242a36; --line-soft:#1c212b;
   --fg:#e8edf5; --fg-dim:#8d97a8; --fg-faint:#5e6878;
   --up:#34d399; --down:#f87171; --accent:#60a5fa;
   --up-soft:rgba(52,211,153,.14); --down-soft:rgba(248,113,113,.14);
+  --hero-grad:linear-gradient(160deg,#171c26,#12151d);
+  --accent-glow:rgba(96,165,250,.34);
+  --header-bg:rgba(11,13,18,.82); --nav-bg:rgba(11,13,18,.9);
   --safe-t:env(safe-area-inset-top,0px);
   --safe-b:env(safe-area-inset-bottom,0px);
   --nav-h:52px;
+}
+/* 浅色：系统是浅色 且 用户没有强制选深色 时自动生效 */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]){
+    --bg:#ffffff; --bg-elev:#f4f5f7; --bg-elev2:#e8eaee;
+    --line:#e1e3ea; --line-soft:#ebedf1;
+    --fg:#14161c; --fg-dim:#5b6270; --fg-faint:#8b91a0;
+    --up:#0e9f56; --down:#dc2626; --accent:#2563eb;
+    --up-soft:rgba(14,159,86,.10); --down-soft:rgba(220,38,38,.10);
+    --hero-grad:linear-gradient(160deg,#f8f9fb,#eef0f4);
+    --accent-glow:rgba(37,99,235,.28);
+    --header-bg:rgba(255,255,255,.82); --nav-bg:rgba(255,255,255,.9);
+  }
+}
+/* 用户在设置里明确选了「浅色」：不管系统是什么，强制浅色 */
+:root[data-theme="light"]{
+  --bg:#ffffff; --bg-elev:#f4f5f7; --bg-elev2:#e8eaee;
+  --line:#e1e3ea; --line-soft:#ebedf1;
+  --fg:#14161c; --fg-dim:#5b6270; --fg-faint:#8b91a0;
+  --up:#0e9f56; --down:#dc2626; --accent:#2563eb;
+  --up-soft:rgba(14,159,86,.10); --down-soft:rgba(220,38,38,.10);
+  --hero-grad:linear-gradient(160deg,#f8f9fb,#eef0f4);
+  --accent-glow:rgba(37,99,235,.28);
+  --header-bg:rgba(255,255,255,.82); --nav-bg:rgba(255,255,255,.9);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;height:100%;background:var(--bg)}
@@ -43,7 +82,7 @@ button{background:none;border:0;padding:0;cursor:pointer}
 header{
   position:sticky;top:0;z-index:20;
   padding:calc(var(--safe-t) + 10px) 16px 10px;
-  background:rgba(11,13,18,.82);backdrop-filter:saturate(180%) blur(20px);
+  background:var(--header-bg);backdrop-filter:saturate(180%) blur(20px);
   -webkit-backdrop-filter:saturate(180%) blur(20px);
   border-bottom:1px solid var(--line-soft);
   display:flex;align-items:center;gap:10px;
@@ -60,7 +99,7 @@ nav{
   position:fixed;left:0;right:0;bottom:0;z-index:20;
   display:grid;grid-template-columns:repeat(4,1fr);
   padding-bottom:var(--safe-b);
-  background:rgba(11,13,18,.9);backdrop-filter:saturate(180%) blur(20px);
+  background:var(--nav-bg);backdrop-filter:saturate(180%) blur(20px);
   -webkit-backdrop-filter:saturate(180%) blur(20px);
   border-top:1px solid var(--line-soft);
 }
@@ -70,7 +109,7 @@ nav button.on{color:var(--accent)}
 
 /* ---------- cards ---------- */
 .hero{
-  background:linear-gradient(160deg,#171c26,#12151d);
+  background:var(--hero-grad);
   border:1px solid var(--line);border-radius:16px;padding:18px 18px 16px;margin-bottom:12px;
 }
 .hero .label{font-size:12px;color:var(--fg-dim);letter-spacing:.02em}
@@ -122,7 +161,7 @@ nav button.on{color:var(--accent)}
 .fab{
   position:fixed;right:16px;bottom:calc(var(--nav-h) + var(--safe-b) + 16px);z-index:25;
   width:54px;height:54px;border-radius:27px;background:var(--accent);color:#08111f;
-  display:grid;place-items:center;box-shadow:0 8px 24px rgba(96,165,250,.34);
+  display:grid;place-items:center;box-shadow:0 8px 24px var(--accent-glow);
 }
 .fab svg{width:25px;height:25px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round}
 .fab:active{transform:scale(.93)}
@@ -155,9 +194,11 @@ nav button.on{color:var(--accent)}
 .field .hint{font-size:11px;color:var(--fg-faint);margin-top:5px}
 .f2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg.seg3{grid-template-columns:1fr 1fr 1fr}
 .seg button{padding:9px;border-radius:8px;font-size:14.5px;font-weight:600;color:var(--fg-dim)}
 .seg button.on[data-side="buy"]{background:var(--up-soft);color:var(--up)}
 .seg button.on[data-side="sell"]{background:var(--down-soft);color:var(--down)}
+.seg button.on[data-theme-opt]{background:var(--bg-elev2);color:var(--fg)}
 /* 可搜索下拉 */
 .combo{position:relative}
 .combo-pop{
@@ -329,6 +370,13 @@ nav button.on{color:var(--accent)}
     <button style="visibility:hidden">占位</button>
   </div>
   <div class="sheet-bd">
+    <div class="sec"><h2>外观</h2></div>
+    <div class="seg seg3" id="theme-seg" style="margin-bottom:14px">
+      <button data-theme="system" data-theme-opt>跟随系统</button>
+      <button data-theme="light" data-theme-opt>浅色</button>
+      <button data-theme="dark" data-theme-opt>深色</button>
+    </div>
+
     <div class="sec"><h2>行情自动刷新</h2></div>
     <p class="faint" style="font-size:11.5px;line-height:1.75;margin:0 2px 10px">
       默认完全离线，不填这个不影响任何功能。填了免费 Key 之后，「持仓」页的「刷新行情」才会联网——只发股票代码出去，不带你的任何交易或持仓数据。
