@@ -69,8 +69,12 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;height:100%;background:var(--bg)}
 body{
+  /* position:fixed + 四边都设 0：让浏览器把 body 撑满到「上下左右都是 0」之间的整个空间，
+     这是盒模型的基础行为，不依赖 100vh/100dvh 这类视口单位——它们在 iOS 独立 PWA
+     模式（从主屏图标打开）下量出来的高度有时会比真实屏幕矮一截，底下露出桌面壁纸。
+     fixed 定位不会有这个问题，因为它是直接锚定在视口本身，不用先「测量」一个高度数值。 */
+  position:fixed;top:0;left:0;right:0;bottom:0;
   display:flex;flex-direction:column;
-  height:100vh;height:100dvh;
   background:var(--bg); color:var(--fg);
   font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif;
   overscroll-behavior-y:none; -webkit-font-smoothing:antialiased;

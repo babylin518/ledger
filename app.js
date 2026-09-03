@@ -2,7 +2,7 @@
    数据源单一：trades 流水。持仓 / 已实现盈亏 / 统计全部由流水按 FIFO 实时推导。 */
 'use strict';
 
-const VERSION = '1.6.1';
+const VERSION = '1.6.2';
 const EPS = 1e-9;
 
 /* ============================== IndexedDB ============================== */
